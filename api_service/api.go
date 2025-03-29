@@ -1,6 +1,7 @@
 package apiservice
 
 import (
+	"giphy_microservices/config"
 	"giphy_microservices/internal/domain"
 	"giphy_microservices/internal/handlers"
 	"giphy_microservices/internal/infrastructure/redis"
@@ -19,9 +20,14 @@ func (s *Server) Start() error {
 
 func NewServer(address string) *Server {
 	router := gin.Default()
+	redisConfig := config.NewRedisConfig("127.0.0.1:6379", "", 0)
+	redisClient, err := redis.NewRedisClient(redisConfig)
+	if err != nil {
+		panic("Couldn't create redis client")
+	}
 	handler := handlers.PostHandler{
 		Posts:       []domain.Post{},
-		RedisClient: *redis.NewRedisClient("127.0.0.1:6379"),
+		RedisClient: *redisClient,
 	}
 	{
 		v1 := router.Group("/v1")

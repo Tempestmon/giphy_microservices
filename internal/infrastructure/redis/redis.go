@@ -2,6 +2,10 @@ package redis
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"giphy_microservices/config"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -11,8 +15,9 @@ type RedisKey struct {
 	Value string
 }
 
+var ErrKeyNotFound = errors.New("Redis key not found")
+
 type RedisClient struct {
-	address string
 	client  *redis.Client
 	context context.Context
 }
@@ -22,24 +27,27 @@ type Redis interface {
 	SetKey(key string, value string) error
 }
 
-func NewRedisClient(address string) *RedisClient {
+func NewRedisClient(cfg *config.RedisConfig) (*RedisClient, error) {
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     address,
-		Password: "",
-		DB:       0,
+		Addr:     cfg.Addr,
+		Password: cfg.Password,
+		DB:       cfg.Db,
 	})
-	return &RedisClient{address: address, client: rdb, context: context.Background()}
+	return &RedisClient{
+		client:  rdb,
+		context: context.Background(),
+	}, nil
 }
 
-func (r *RedisClient) GetKey(key string) RedisKey {
+func (r *RedisClient) GetKey(key string) (string, error) {
 	value, err := r.client.Get(r.context, key).Result()
+	fmt.Printf("redis get key error %s", err)
 	if err != nil {
-		return RedisKey{}
+		return "", ErrKeyNotFound
 	}
-	return RedisKey{Key: key, Value: value}
+	return value, nil
 }
 
-func (r *RedisClient) SetKey(key string, value string) error {
-	r.client.Set(r.context, key, value, 200)
-	return nil
+func (r *RedisClient) SetKey(key string, value string) (string, error) {
+	return r.client.Set(r.context, key, value, time.Hour).Result()
 }
