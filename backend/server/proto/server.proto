@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+option go_package = "github.com/tempestmon/giphy_microservices/backend/server/gen";
+
+service MemeServer {
+  rpc GetMeme (GetMemeRequest) returns (GetMemeResponse);
+  rpc SetMeme (SetMemeRequest) returns (SetMemeResponse);
+}
+
+message GetMemeRequest {
+    string id = 1;
+}
+
+message GetMemeResponse {
+    string id = 1;
+    string name = 2;
+    string description = 3;
+}
+
+message SetMemeRequest {
+    string name = 2;
+    string description = 3;
+}
+
+message SetMemeResponse {
+    string id = 1;
+    bool success = 2;
+}
